@@ -1,0 +1,1 @@
+interface InspectionRepository : InspectionAdminActionService.InspectionRepository
