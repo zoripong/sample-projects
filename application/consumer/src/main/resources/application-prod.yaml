@@ -1,0 +1,6 @@
+spring:
+  kafka:
+    bootstrap-servers:
+      - b-1.ohouse-prod-kafka.53ac0g.c3.kafka.ap-northeast-2.amazonaws.com:9092
+      - b-2.ohouse-prod-kafka.53ac0g.c3.kafka.ap-northeast-2.amazonaws.com:9092
+      - b-3.ohouse-prod-kafka.53ac0g.c3.kafka.ap-northeast-2.amazonaws.com:9092

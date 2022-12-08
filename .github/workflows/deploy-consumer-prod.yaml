@@ -1,0 +1,76 @@
+name: Deploy consumer to production
+
+on:
+  release:
+    types: [published]
+
+env:
+  APP_PROFILE: prod
+  WORKING_DIR: ./application/consumer
+  BUILD_MODULE: :application:consumer:bootJar
+  ECR_REPOSITORY: commerce/spring-multi-module-template-consumer  # TODO(template): 변경 필요
+  JAR_FILE_NAME: consumer.jar
+  APP_NAME: spring-multi-module-template-consumer  # TODO(template): 변경 필요
+
+jobs:
+  get-image-tag:
+    if: startsWith(github.event.release.tag_name, 'consumer/')
+    name: Generate Image Tag
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ env.APP_PROFILE }}-${{ steps.vars.outputs.sha_short }}
+      release_version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: get image tag
+        id: vars
+        run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/consumer/}
+
+  deploy:
+    name: Deploy
+    runs-on: [self-hosted, Linux, X64, prod-k8s-runner]
+    needs: get-image-tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup AdoptOpenJDK
+        uses: joschi/setup-jdk@v2
+        with:
+          java-version: '11'
+
+      - name: Build Project with Gradle
+        run: ./gradlew ${{ env.BUILD_MODULE }} -x test
+
+      - uses: kciter/aws-ecr-action@master
+        with:
+          access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          account_id: "${{ secrets.AWS_ACCOUNT_ID }}"
+          repo: ${{ env.ECR_REPOSITORY }}
+          region: ap-northeast-2
+          tags: ${{ needs.get-image-tag.outputs.image_tag }}
+          create_repo: true
+          dockerfile: ./docker/Dockerfile
+          extra_build_args: "--target app --build-arg BUILD_ENV=${{ env.BUILD_ENV }} --build-arg MODULE=${{ env.WORKING_DIR }} --build-arg JAR=${{ env.JAR_FILE_NAME }}"
+
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ env.APP_NAME }}
+          profile: ${{ env.APP_PROFILE }}
+          image-tag: ${{ needs.get-image-tag.outputs.image_tag }}
+          version: ${{ needs.get-image-tag.outputs.release_version }}

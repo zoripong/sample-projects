@@ -1,0 +1,31 @@
+server:
+  port: 8080
+  shutdown: graceful
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: spring-multi-module-template-consumer # TODO(template): 변경 필요
+  kafka:
+    topics:
+      sample: sample # TODO(template): 변경 필요
+    bootstrap-servers:
+      - b-1.oh-dev-kafka.mvaem5.c3.kafka.ap-northeast-2.amazonaws.com:9092
+      - b-2.oh-dev-kafka.mvaem5.c3.kafka.ap-northeast-2.amazonaws.com:9092
+      - b-3.oh-dev-kafka.mvaem5.c3.kafka.ap-northeast-2.amazonaws.com:9092
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+logging:
+  level:
+    root: info

@@ -1,0 +1,43 @@
+apiVersion: v1
+name: spring-multi-module-template-api # TODO(template): 변경 필요
+namespace: commerce # 서비스 네임 스페이스
+group: commerce # 소유 팀 정보
+version: 0.0 # <major>.<minor>
+type: Service # 서비스 타입 ['Service', 'Library', 'External'] 중 하나
+description: |- # TODO(template): 변경 필요
+  sample api service for multi module project
+
+protos: # protobuf IDL 파일들이 있는 장소
+  includes:
+    - base: protos
+      pattern: "**/*.proto"
+  imports: # Ohouse 내부에서 제공하는 패키지 의존성, 기본값 없음.
+    - namespace: googleapis
+      name: api-common-protos
+      version: 1.50.0
+
+gen: # 코드 생성 설정, 기본값 없음.
+  grpc:
+    server: kotlin
+    clients:
+      - kotlin
+  doc:
+    - html
+
+build:
+  cmd: |-
+    ../../gradlew bootJar -i --refresh-dependencies
+
+image: # 도커 파일 이미지 생성 및 저장소로 배포
+  dockerfile: docker/Dockerfile
+  target: # 리포지토리에 push할 target 이미지, 기본값 app
+    - app
+  args:
+    MODULE: application/api
+    JAR: api.jar
+
+metadata:
+  gitrepo: https://github.com/bucketplace/spring-multi-module-template # TODO(template): 변경 필요
+  envs:
+    - name: local
+      endpoint: http://lvh.me:8080

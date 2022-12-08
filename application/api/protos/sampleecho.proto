@@ -1,0 +1,20 @@
+syntax = "proto3";
+package sampleecho;
+
+import "google/api/annotations.proto";
+
+option java_multiple_files = true;
+option java_package = "se.ohou.api.sampleecho";
+
+service EchoService {
+  rpc echo (EchoRequest) returns (EchoResponse);
+}
+
+message EchoRequest {
+  // description test
+  string message  = 1;
+}
+
+message EchoResponse {
+  string echoedMessage = 1;
+}

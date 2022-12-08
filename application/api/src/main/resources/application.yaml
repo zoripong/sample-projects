@@ -1,0 +1,32 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+server:
+  port: -1 # Prevent the embedded Tomcat from opening a TCP/IP port.
+  shutdown: graceful
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+
+armeria:
+  ports:
+    - port: 8080
+      protocol: HTTP
+    - port: 50051
+      protocol: HTTP
+
+grpc:
+  docs:
+    enabled: true
+
+logging:
+  level:
+    root: info

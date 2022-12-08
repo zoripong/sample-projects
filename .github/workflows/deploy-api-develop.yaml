@@ -1,0 +1,51 @@
+name: Deploy api to develop
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'application/api/**'
+      - 'build.gradle.kts'
+      - '.github/workflows/deploy-api-develop.yaml'
+      - '!*.md'
+      - '!**/src/test/**'
+      - 'database/**'
+      - 'domain/**'
+
+env:
+  APP_PROFILE: dev
+  WORKING_DIR: ./application/api
+  BUILD_MODULE: :application:api:bootJar
+  ECR_REPOSITORY: commerce/spring-multi-module-template-api  # TODO(template): 변경 필요
+  APP_NAME: spring-multi-module-template-api  # TODO(template): 변경 필요
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Mortar Deploy
+        id: mortar-deploy
+        uses: bucketplace/mortar-deploy-action@v1
+        with:
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+          nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
+          create-ecr-repo: true
+          config: application/api/mortar.yaml
+
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ env.APP_NAME }}
+          profile: ${{ env.APP_PROFILE }}
+          image-tag: ${{ steps.mortar-deploy.outputs.app-version }}
+          version: ${{ steps.mortar-deploy.outputs.app-version }}
