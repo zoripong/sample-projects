@@ -1,1 +1,0 @@
-interface InspectionMongoRepository : MongoRepository<InspectionDocument, String>
